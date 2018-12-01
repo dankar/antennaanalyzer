@@ -30,14 +30,9 @@ public:
         return sqrtf(real*real + imag*imag);
     }
 
-    void print()
+    String to_string()
     {
-        Serial.print(real);
-        if(imag >= 0.0f)
-            Serial.print(" + j");
-        else
-            Serial.print(" - j");
-        Serial.print(fabs(imag));
+        return String(real) + (imag >= 0.0f ? String(" + j") : String(" - j")) + String(fabs(imag)); ;
     }
     float real;
     float imag;

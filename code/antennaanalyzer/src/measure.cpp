@@ -191,11 +191,11 @@ void impedance_tester::print_calibration_data()
         Serial.print("Current calibration: frequency = ");
         Serial.print(calibration_index_to_frequency(i));
         Serial.print(", a: ");
-        m_calibration_data.coefficients[0][i].print();
+        Serial.print(m_calibration_data.coefficients[0][i].to_string());
         Serial.print(", b: ");
-        m_calibration_data.coefficients[1][i].print();
+        Serial.print(m_calibration_data.coefficients[1][i].to_string());
         Serial.print(", c: ");
-        m_calibration_data.coefficients[2][i].print();
+        Serial.print(m_calibration_data.coefficients[2][i].to_string());
         Serial.println();
     }
 }
@@ -245,8 +245,8 @@ void impedance_tester::run_calibration(display &disp)
     uint32_t old_samples = samples_per_measurement;
     uint32_t old_delay = measurement_delay;
 
-    samples_per_measurement = 4000;
-    measurement_delay = 200;
+    samples_per_measurement = 2048; //4000;
+    measurement_delay = 100; //200;
 
     calibration_type calibration_loads[] = {OHM5, OHM50, OHM500};
 
@@ -260,7 +260,7 @@ void impedance_tester::run_calibration(display &disp)
         {
             make_measurement(calibration_index_to_frequency(j));
             gamma.gamma[calibration_loads[i]][j] = get_gamma();
-            gamma.gamma[calibration_loads[i]][j].print();
+            Serial.print(gamma.gamma[calibration_loads[i]][j].to_string());
             Serial.println();
             disp.calibration_tick();
         }

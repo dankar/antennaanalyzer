@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "display.h"
+#include <Fonts/FreeSans24pt7b.h>
 
 #define DISPLAY_X 320
 #define DISPLAY_Y 240
@@ -27,30 +28,54 @@ void display::init()
     digitalWrite(TFT_LED, HIGH);
 }
 
+void display::draw_centered_text(const String &str, uint16_t x, uint16_t y, uint8_t size, uint16_t color)
+{
+    int16_t bx, by;
+    uint16_t bw, bh;
+    uint16_t size_x, size_y;
+
+    m_tft.setTextSize(size);
+    m_tft.setTextColor(color);
+
+    m_tft.getTextBounds(str, 0, 0, &bx, &by, &bw, &bh);
+
+    size_x = bw-bx;
+    size_y = bh-by;
+
+    m_tft.setCursor(x - size_x/2, y - size_y/2);
+    m_tft.print(str);
+}
+
+void display::erase_centered_text(const String &str, uint16_t x, uint16_t y, uint8_t size)
+{
+    int16_t bx, by;
+    uint16_t bw, bh;
+    uint16_t size_x, size_y;
+
+    m_tft.setTextSize(size);
+
+    m_tft.getTextBounds(str, 0, 0, &bx, &by, &bw, &bh);
+
+    size_x = bw-bx;
+    size_y = bh-by;
+
+    m_tft.fillRect(x - size_x/2, y - size_y/2, bw, bh, BACKGROUND_COLOR);
+}
+
 void display::show_load_screen()
 {
     clear_screen();
-    m_tft.setTextSize(3);
-    m_tft.setTextColor(ILI9341_WHITE);
-    m_tft.setCursor(70, 50);
-    m_tft.print("  Loading"); 
-    m_tft.setCursor(70, 80);
-    m_tft.print("calibration");
-    m_tft.setCursor(70, 110);
-    m_tft.print("  data...");
+    draw_centered_text("Loading", m_tft.width()/2, m_tft.height()/2 - 10, 1, DEFAULT_TEXT_COLOR);
+    draw_centered_text("calibration", m_tft.width()/2, m_tft.height()/2, 1, DEFAULT_TEXT_COLOR);
+    draw_centered_text("data...", m_tft.width()/2, m_tft.height()/2 + 10, 1, DEFAULT_TEXT_COLOR);
 }
 
 void display::show_save_screen()
 {
     clear_screen();
-    m_tft.setTextSize(3);
-    m_tft.setTextColor(ILI9341_WHITE);
-    m_tft.setCursor(70, 50);
-    m_tft.print("  Saving"); 
-    m_tft.setCursor(70, 80);
-    m_tft.print("calibration");
-    m_tft.setCursor(70, 110);
-    m_tft.print("  data...");
+    draw_centered_text("Saving", m_tft.width()/2, m_tft.height()/2 - 10, 1, DEFAULT_TEXT_COLOR);
+    draw_centered_text("calibration", m_tft.width()/2, m_tft.height()/2, 1, DEFAULT_TEXT_COLOR);
+    draw_centered_text("data...", m_tft.width()/2, m_tft.height()/2 + 10, 1, DEFAULT_TEXT_COLOR);
 }
 
 void display::show_graph_screen(float start_freq, float stop_freq)
@@ -58,7 +83,7 @@ void display::show_graph_screen(float start_freq, float stop_freq)
     m_current_index = 0;
     clear_screen();
 
-    m_tft.setTextColor(ILI9341_YELLOW);
+    m_tft.setTextColor(GRAPH_LEGEND_COLOR);
     m_tft.setTextSize(1);
     m_tft.setCursor(GRAPH_LEFT_MARGIN, 10);
     m_tft.print(start_freq);
@@ -69,10 +94,10 @@ void display::show_graph_screen(float start_freq, float stop_freq)
     m_tft.print("MHz");
 
     // Bounding box
-    m_tft.drawLine(GRAPH_LEFT_MARGIN, GRAPH_TOP_MARGIN, DISPLAY_X - GRAPH_RIGHT_MARGIN, GRAPH_TOP_MARGIN, ILI9341_LIGHTGREY);
-    m_tft.drawLine(DISPLAY_X - GRAPH_RIGHT_MARGIN, GRAPH_TOP_MARGIN, DISPLAY_X - GRAPH_RIGHT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, ILI9341_LIGHTGREY);
-    m_tft.drawLine(DISPLAY_X - GRAPH_RIGHT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, GRAPH_LEFT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, ILI9341_LIGHTGREY);
-    m_tft.drawLine(GRAPH_LEFT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, GRAPH_LEFT_MARGIN, GRAPH_TOP_MARGIN, ILI9341_LIGHTGREY);
+    m_tft.drawLine(GRAPH_LEFT_MARGIN, GRAPH_TOP_MARGIN, DISPLAY_X - GRAPH_RIGHT_MARGIN, GRAPH_TOP_MARGIN, GRAPH_BOUNDARIES_COLOR);
+    m_tft.drawLine(DISPLAY_X - GRAPH_RIGHT_MARGIN, GRAPH_TOP_MARGIN, DISPLAY_X - GRAPH_RIGHT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, GRAPH_BOUNDARIES_COLOR);
+    m_tft.drawLine(DISPLAY_X - GRAPH_RIGHT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, GRAPH_LEFT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, GRAPH_BOUNDARIES_COLOR);
+    m_tft.drawLine(GRAPH_LEFT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, GRAPH_LEFT_MARGIN, GRAPH_TOP_MARGIN, GRAPH_BOUNDARIES_COLOR);
 
     // VSWR text
     for(int i = 1; i <= 12; i+=2)
@@ -85,7 +110,7 @@ void display::show_graph_screen(float start_freq, float stop_freq)
             precision = 0;
             
         m_tft.print(val, precision);
-        m_tft.drawLine(GRAPH_LEFT_MARGIN+1, y_from_value(val), DISPLAY_X - GRAPH_RIGHT_MARGIN-1, y_from_value(val), ILI9341_DARKGREY);
+        m_tft.drawLine(GRAPH_LEFT_MARGIN+1, y_from_value(val), DISPLAY_X - GRAPH_RIGHT_MARGIN-1, y_from_value(val), GRAPH_LINE_COLOR);
         if(i == 1)
             i = 0;
     }
@@ -93,7 +118,7 @@ void display::show_graph_screen(float start_freq, float stop_freq)
     // VSWR lines
     for(int i = 1; i < 10; i++)
     {
-        m_tft.drawLine(x_from_index(256*i/10), GRAPH_TOP_MARGIN+1, x_from_index(256*i/10), DISPLAY_Y - GRAPH_BOTTOM_MARGIN - 1, ILI9341_DARKGREY);
+        m_tft.drawLine(x_from_index(256*i/10), GRAPH_TOP_MARGIN+1, x_from_index(256*i/10), DISPLAY_Y - GRAPH_BOTTOM_MARGIN - 1, GRAPH_LINE_COLOR);
     }
 }
 
@@ -120,9 +145,9 @@ void display::show_impedance_viewer(complex_t comp)
     uint16_t w, h;
 
     m_tft.setTextSize(2);
-    m_tft.setTextColor(ILI9341_BLUE);
+    m_tft.setTextColor(GRAPH_LEGEND_COLOR);
     m_tft.getTextBounds("100.00 + 100.00j", 10, 50, &x1, &x2, &w, &h);
-    m_tft.fillRect(x1, x2, w, h, ILI9341_BLACK);
+    m_tft.fillRect(x1, x2, w, h, BACKGROUND_COLOR);
     m_tft.setCursor(10, 50);
 
     m_tft.print(comp.real);
@@ -133,33 +158,23 @@ void display::show_impedance_viewer(complex_t comp)
     m_tft.print(fabs(comp.imag));
 }
 
-void display::print_load_type(calibration_type type)
+String display::get_load_type_string(calibration_type type)
 {
     switch(type)
     {
         case OHM5:
-        m_tft.print("5 Ohm");
-        break;
+        return String("5 Ohm");
         case OHM50:
-        m_tft.print("50 Ohm");
-        break;
+        return String("50 Ohm");
         case OHM500:
-        m_tft.print("500 Ohm");
-        break;
+        return String("500 Ohm");
     }
+
+    return String("Unknown");
 }
 
-void display::show_new_load_prompt(calibration_type type)
+void display::wait_for_touch()
 {
-    clear_screen();
-    m_tft.setTextSize(2);
-    m_tft.setCursor(10, 10);
-    m_tft.setTextColor(ILI9341_WHITE);
-    m_tft.print("Please attach ");
-    print_load_type(type);
-    m_tft.setCursor(10, 25);
-    m_tft.print("and touch screen");
-
     int count = 0;
     for(;;)
     {
@@ -174,9 +189,18 @@ void display::show_new_load_prompt(calibration_type type)
         }
         delay(10);
 
-        if(count > 10)
+        if(count > 3)
             break;
     }
+}
+
+void display::show_new_load_prompt(calibration_type type)
+{
+    clear_screen();
+
+    draw_centered_text(String("Attach ") + get_load_type_string(type) + " load and touch screen", m_tft.width()/2, m_tft.height()/2, 1, DEFAULT_TEXT_COLOR);
+
+    wait_for_touch();
 }
 
 TS_Point display::get_touch_point()
@@ -185,13 +209,7 @@ TS_Point display::get_touch_point()
     int temp = p.x;
     p.x = p.y;
     p.y = temp;
-    /*
-    Serial.print("X = "); Serial.print(p.x);
-    Serial.print("\tY = "); Serial.print(p.y);
-    Serial.print("\tPressure = "); Serial.println(p.z);  
-    */
-    
-    // Scale from ~0->4000 to tft.width using the calibration #'s
+
     p.x = map(p.x, TS_MINX, TS_MAXX, 0, m_tft.width());
     p.y = map(p.y, TS_MINY, TS_MAXY, 0, m_tft.height());
 
@@ -206,11 +224,11 @@ void display::graph_add_datapoint(float vswr, uint32_t freq, int steps)
 
     if(m_current_index == 0)
     {
-        m_tft.drawPixel(x_from_index(m_current_index), value, ILI9341_WHITE);
+        m_tft.drawPixel(x_from_index(m_current_index), value, GRAPH_COLOR);
     }
     else
     {
-        m_tft.drawLine(x_from_index(m_current_index-steps), y_from_value(m_previous_vswr), x_from_index(m_current_index), value, ILI9341_WHITE);
+        m_tft.drawLine(x_from_index(m_current_index-steps), y_from_value(m_previous_vswr), x_from_index(m_current_index), value, GRAPH_COLOR);
     }
 
     if(m_previous_vswr > 2.0 && vswr < 2.0)
@@ -218,7 +236,7 @@ void display::graph_add_datapoint(float vswr, uint32_t freq, int steps)
         m_tft.setCursor(x_from_index(m_current_index) - 20, 100 - 10);
         m_tft.print(float(freq) / 1000000, 3);
         m_tft.print("MHz");
-        m_tft.drawLine(x_from_index(m_current_index), 100, x_from_index(m_current_index), DISPLAY_Y - GRAPH_BOTTOM_MARGIN - 1, ILI9341_GREEN);
+        m_tft.drawLine(x_from_index(m_current_index), 100, x_from_index(m_current_index), DISPLAY_Y - GRAPH_BOTTOM_MARGIN - 1, GRAPH_VSWR_LINE);
     }
 
     if(m_current_index != 0 && m_previous_vswr < 2.0 && vswr > 2.0)
@@ -226,7 +244,7 @@ void display::graph_add_datapoint(float vswr, uint32_t freq, int steps)
         m_tft.setCursor(x_from_index(m_current_index) - 20, 110 - 10);
         m_tft.print(float(freq) / 1000000, 3);
         m_tft.print("MHz");
-        m_tft.drawLine(x_from_index(m_current_index-steps), 110, x_from_index(m_current_index-steps), DISPLAY_Y - GRAPH_BOTTOM_MARGIN - 1, ILI9341_GREEN);
+        m_tft.drawLine(x_from_index(m_current_index-steps), 110, x_from_index(m_current_index-steps), DISPLAY_Y - GRAPH_BOTTOM_MARGIN - 1, GRAPH_VSWR_LINE);
     }
     m_current_index += steps;
     m_previous_vswr = vswr;
@@ -235,12 +253,8 @@ void display::graph_add_datapoint(float vswr, uint32_t freq, int steps)
 void display::show_calibration_screen(calibration_type type, uint16_t ticks)
 {
     clear_screen();
-    m_tft.setCursor(100, 20);
-    m_tft.setTextSize(1);
-    m_tft.setTextColor(ILI9341_WHITE);
-    m_tft.print("Calibrating for ");
 
-    print_load_type(type);
+    draw_centered_text(String("Calibrating for ") + get_load_type_string(type), m_tft.width()/2, m_tft.height()/2 - 35, 1, DEFAULT_TEXT_COLOR);
 
     m_number_of_calibration_steps = ticks;
     m_current_calibration_step = 0;
@@ -249,16 +263,16 @@ void display::show_calibration_screen(calibration_type type, uint16_t ticks)
 }
 void display::clear_screen()
 {
-    m_tft.fillScreen(ILI9341_BLACK);
+    m_tft.fillScreen(BACKGROUND_COLOR);
 }
 void display::calibration_tick()
 {
-    m_tft.fillRect(70, 100, 200, 50, ILI9341_BLACK);
-    m_tft.setCursor(70, 100);
-    m_tft.setTextSize(5);
-    m_tft.setTextColor(ILI9341_YELLOW);
-    m_tft.print(float(m_current_calibration_step) * 100.0f / m_number_of_calibration_steps, 2);
-    m_tft.print("%");
-
-   m_current_calibration_step++;
+    if(m_current_calibration_step % 5 == 0)
+    {
+        m_tft.setFont(&FreeSans24pt7b);
+        erase_centered_text("100.0%", m_tft.width()/2, m_tft.height()/2, 1);
+        draw_centered_text(String(float(m_current_calibration_step) * 100.0f / m_number_of_calibration_steps, 2) + "%", m_tft.width()/2, m_tft.height()/2, 1, GRAPH_LEGEND_COLOR);
+        m_tft.setFont();
+    }
+    m_current_calibration_step++;
 }
