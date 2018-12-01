@@ -10,6 +10,7 @@ public:
         HOME_SCREEN,
         VSWR_GRAPH,
         SMITH_CHART,
+        IMPEDANCE,
         SETTINGS,
         CALIBRATE,
         BRIGHTNESS,
@@ -25,6 +26,7 @@ private:
     void home_screen();
     void settings();
     void brightness();
+    void show_impedance();
 
     states m_current_state;
     impedance_tester &m_tester;

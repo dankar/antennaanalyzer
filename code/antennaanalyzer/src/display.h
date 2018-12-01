@@ -46,6 +46,8 @@ public:
     void show_load_screen();
     void show_save_screen();
 
+    void print_calibration_gamma(complex_t gamma);
+
     TS_Point wait_for_touch();
 private:
     void draw_centered_text(const String &str, uint16_t x, uint16_t y, uint8_t size, uint16_t color);

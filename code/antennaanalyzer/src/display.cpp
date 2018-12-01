@@ -314,3 +314,12 @@ void display::calibration_tick()
     }
     m_current_calibration_step++;
 }
+
+void display::print_calibration_gamma(complex_t gamma)
+{
+    if(m_current_calibration_step % 2 == 0)
+    {
+        erase_centered_text("100.0 + j100.0", m_tft.width()/2, m_tft.height()/2+50, 1);
+        draw_centered_text(gamma.to_string(), m_tft.width()/2, m_tft.height()/2+50, 1, DEFAULT_TEXT_COLOR);
+    }
+}

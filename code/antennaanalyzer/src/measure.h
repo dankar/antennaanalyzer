@@ -54,8 +54,10 @@ public:
     void save_calibration_data();
     void load_calibration_data();
     void print_calibration_data();
-private:
+
     void set_frequency(uint32_t freq);
+private:
+    
     void disable_frequency_output();
     void adjust_gamma();
     void get_coefficients(complex_t m1, complex_t m2, complex_t m3, complex_t &a, complex_t &b, complex_t &c);

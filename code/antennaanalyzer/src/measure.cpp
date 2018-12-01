@@ -260,8 +260,7 @@ void impedance_tester::run_calibration(display &disp)
         {
             make_measurement(calibration_index_to_frequency(j));
             gamma.gamma[calibration_loads[i]][j] = get_gamma();
-            Serial.print(gamma.gamma[calibration_loads[i]][j].to_string());
-            Serial.println();
+            disp.print_calibration_gamma(gamma.gamma[calibration_loads[i]][j]);
             disp.calibration_tick();
         }
     }

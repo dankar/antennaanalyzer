@@ -30,9 +30,9 @@ void menu_system::draw_vswr_graph()
 
 void menu_system::home_screen()
 {
-    const char *menu_strings[] = {"VSWR graph", "Smith chart", "Settings"};
-    uint8_t menu[] = { VSWR_GRAPH, SMITH_CHART, SETTINGS };
-    m_current_state = (states)m_display.draw_menu(menu_strings, menu, 3);
+    const char *menu_strings[] = {"VSWR graph", "Smith chart", "Impedance",  "Settings"};
+    uint8_t menu[] = { VSWR_GRAPH, SMITH_CHART, IMPEDANCE, SETTINGS };
+    m_current_state = (states)m_display.draw_menu(menu_strings, menu, 4);
 }
 
 void menu_system::settings()
@@ -42,9 +42,20 @@ void menu_system::settings()
     m_current_state = (states)m_display.draw_menu(menu_strings, menu, 3);
 }
 
+void menu_system::show_impedance()
+{
+    m_display.clear_screen();
+    for(;;)
+    {
+        m_tester.make_measurement(10000000);
+        complex_t impedance = m_tester.get_impedance();
+        m_display.show_impedance_viewer(impedance);
+    }
+}
+
 void menu_system::brightness()
 {
-    const uint8_t step = 20;
+    const uint8_t step = 5;
     const char *menu_strings[] = {"^", "v", "Back"};
     uint8_t menu[] = { BRIGHTNESS_UP, BRIGHTNESS_DOWN, SETTINGS };
 
@@ -87,6 +98,9 @@ void menu_system::run()
         break;
     case SMITH_CHART:
         m_current_state = HOME_SCREEN;
+        break;
+    case IMPEDANCE:
+        show_impedance();
         break;
     case SETTINGS:
         settings();
