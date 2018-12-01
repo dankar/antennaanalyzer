@@ -45,6 +45,7 @@ class impedance_tester
 public:
     void init();
     void make_measurement(uint32_t freq);
+    void set_measurement_parameters(uint32_t delay, uint32_t number_of_measurements);
     complex_t get_impedance();
     complex_t get_gamma();
     float get_vswr();

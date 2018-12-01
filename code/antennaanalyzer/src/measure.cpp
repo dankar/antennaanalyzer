@@ -20,6 +20,12 @@ void impedance_tester::init()
     m_use_calibration_data = true;
 }
 
+void impedance_tester::set_measurement_parameters(uint32_t delay, uint32_t number_of_measurements)
+{
+    samples_per_measurement = number_of_measurements;
+    measurement_delay = delay;
+}
+
 void impedance_tester::set_frequency(uint32_t freq)
 {
     si5351.set_freq(100ULL * freq, SI5351_CLK0);
@@ -143,7 +149,7 @@ void impedance_tester::adjust_gamma()
 {
     complex_t a, b, c;
     get_coefficients_from_frequency(m_current_result.frequency, a, b, c);
-    
+
     // Calculate error factors from calibration coefficients and adjust gamma
     complex_t e00 = b;
     complex_t e11 = -c;
@@ -252,7 +258,7 @@ void impedance_tester::run_calibration(display &disp)
 
         for(uint32_t j = 0; j < 128; j++)
         {
-            make_measurement(calibration_index_to_frequency(i));
+            make_measurement(calibration_index_to_frequency(j));
             gamma.gamma[calibration_loads[i]][j] = get_gamma();
             gamma.gamma[calibration_loads[i]][j].print();
             Serial.println();
