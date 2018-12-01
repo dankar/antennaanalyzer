@@ -93,16 +93,17 @@ public:
     complex_t get_impedance();
     complex_t get_gamma();
     float get_vswr();
-    void set_frequency(uint32_t freq);
-    void disable();
-    void calibrate(display &disp);
+
+    void run_calibration(display &disp);
     void save_calibration_data();
     void load_calibration_data();
     void print_calibration_data();
+private:
+    void set_frequency(uint32_t freq);
+    void disable_frequency_output();
     void adjust_gamma();
     void get_coefficients(complex_t m1, complex_t m2, complex_t m3, complex_t &a, complex_t &b, complex_t &c);
     void calculate_coefficients(gamma_data_t &gamma);
-private:
     void get_coefficients_from_frequency(uint32_t f, complex_t &a, complex_t &b, complex_t &c);
 
     result_t m_current_result;

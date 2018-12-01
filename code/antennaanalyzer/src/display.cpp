@@ -21,15 +21,15 @@ void display::init()
     }
     m_touch.setRotation(1);
 
-    clear();
+    clear_screen();
     m_tft.setRotation(3);
     pinMode(TFT_LED, OUTPUT);
     digitalWrite(TFT_LED, HIGH);
 }
 
-void display::load()
+void display::show_load_screen()
 {
-    clear();
+    clear_screen();
     m_tft.setTextSize(3);
     m_tft.setTextColor(ILI9341_WHITE);
     m_tft.setCursor(70, 50);
@@ -40,9 +40,9 @@ void display::load()
     m_tft.print("  data...");
 }
 
-void display::save()
+void display::show_save_screen()
 {
-    clear();
+    clear_screen();
     m_tft.setTextSize(3);
     m_tft.setTextColor(ILI9341_WHITE);
     m_tft.setCursor(70, 50);
@@ -53,10 +53,10 @@ void display::save()
     m_tft.print("  data...");
 }
 
-void display::graph_init(float start_freq, float stop_freq)
+void display::show_graph_screen(float start_freq, float stop_freq)
 {
     m_current_index = 0;
-    clear();
+    clear_screen();
 
     m_tft.setTextColor(ILI9341_YELLOW);
     m_tft.setTextSize(1);
@@ -85,7 +85,7 @@ void display::graph_init(float start_freq, float stop_freq)
         if(val >= 10.0)
             precision = 0;
             
-        m_tft.print(val, 1);
+        m_tft.print(val, precision);
         m_tft.drawLine(GRAPH_LEFT_MARGIN+1, y_from_value(val), DISPLAY_X - GRAPH_RIGHT_MARGIN-1, y_from_value(val), ILI9341_DARKGREY);
         if(i == 1)
             i = 0;
@@ -115,7 +115,7 @@ uint32_t display::y_from_value(float value)
     return DISPLAY_Y - GRAPH_BOTTOM_MARGIN - result_value;
 }
 
-void display::draw_impedance(complex_t comp)
+void display::show_impedance_viewer(complex_t comp)
 {
     int16_t x1, x2;
     uint16_t w, h;
@@ -130,13 +130,8 @@ void display::draw_impedance(complex_t comp)
     m_tft.print(comp.imag);
 }
 
-void display::new_load(calibration_type type)
+void display::print_load_type(calibration_type type)
 {
-    clear();
-    m_tft.setTextSize(2);
-    m_tft.setCursor(10, 10);
-    m_tft.setTextColor(ILI9341_WHITE);
-    m_tft.print("Please attach ");
     switch(type)
     {
         case OHM5:
@@ -149,6 +144,16 @@ void display::new_load(calibration_type type)
         m_tft.print("500 Ohm");
         break;
     }
+}
+
+void display::show_new_load_prompt(calibration_type type)
+{
+    clear_screen();
+    m_tft.setTextSize(2);
+    m_tft.setCursor(10, 10);
+    m_tft.setTextColor(ILI9341_WHITE);
+    m_tft.print("Please attach ");
+    print_load_type(type);
     m_tft.setCursor(10, 25);
     m_tft.print("and touch screen");
 
@@ -157,7 +162,7 @@ void display::new_load(calibration_type type)
     {
         if(m_touch.touched())
         {
-            m_touch.getPoint();
+            get_touch_point();
             count++;
         }
         else
@@ -169,6 +174,27 @@ void display::new_load(calibration_type type)
         if(count > 10)
             break;
     }
+}
+
+TS_Point display::get_touch_point()
+{
+    TS_Point p = m_touch.getPoint();
+    int temp = p.x;
+    p.x = p.y;
+    p.y = temp;
+    /*
+    Serial.print("X = "); Serial.print(p.x);
+    Serial.print("\tY = "); Serial.print(p.y);
+    Serial.print("\tPressure = "); Serial.println(p.z);  
+    */
+    
+    // Scale from ~0->4000 to tft.width using the calibration #'s
+    p.x = map(p.x, TS_MINX, TS_MAXX, 0, m_tft.width());
+    p.y = map(p.y, TS_MINY, TS_MAXY, 0, m_tft.height());
+
+    p.y = m_tft.height() - p.y;
+
+    return p;
 }
 
 void display::graph_add_datapoint(float vswr, uint32_t freq, int steps)
@@ -203,33 +229,22 @@ void display::graph_add_datapoint(float vswr, uint32_t freq, int steps)
     m_previous_vswr = vswr;
 }
 
-void display::calibration_init(calibration_type type, uint16_t ticks)
+void display::show_calibration_screen(calibration_type type, uint16_t ticks)
 {
-    clear();
+    clear_screen();
     m_tft.setCursor(100, 20);
     m_tft.setTextSize(1);
     m_tft.setTextColor(ILI9341_WHITE);
     m_tft.print("Calibrating for ");
 
-    switch(type)
-    {
-        case OHM5:
-        m_tft.print("5 Ohm");
-        break;
-        case OHM50:
-        m_tft.print("50 Ohm");
-        break;
-        case OHM500:
-        m_tft.print("500 Ohm");
-        break;
-    }
+    print_load_type(type);
 
-    m_calibration_steps = ticks;
+    m_number_of_calibration_steps = ticks;
     m_current_calibration_step = 0;
 
     calibration_tick();
 }
-void display::clear()
+void display::clear_screen()
 {
     m_tft.fillScreen(ILI9341_BLACK);
 }
@@ -239,7 +254,7 @@ void display::calibration_tick()
     m_tft.setCursor(70, 100);
     m_tft.setTextSize(5);
     m_tft.setTextColor(ILI9341_YELLOW);
-    m_tft.print(float(m_current_calibration_step) * 100.0f / m_calibration_steps, 2);
+    m_tft.print(float(m_current_calibration_step) * 100.0f / m_number_of_calibration_steps, 2);
     m_tft.print("%");
 
    m_current_calibration_step++;

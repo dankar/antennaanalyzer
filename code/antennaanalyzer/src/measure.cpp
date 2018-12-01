@@ -28,7 +28,7 @@ void impedance_tester::set_frequency(uint32_t freq)
     si5351.output_enable(SI5351_CLK1, 1);
 }
 
-void impedance_tester::disable()
+void impedance_tester::disable_frequency_output()
 {
     si5351.output_enable(SI5351_CLK0, 0);
     si5351.output_enable(SI5351_CLK1, 0);
@@ -62,14 +62,10 @@ void impedance_tester::make_measurement(uint32_t freq)
     float vv = CleanADC::get_measurement(VV_PIN, samples_per_measurement);
     float vi = CleanADC::get_measurement(VI_PIN, samples_per_measurement);
     float phase = CleanADC::get_measurement(PHASE_PIN, samples_per_measurement);
-    disable();
+    disable_frequency_output();
 
     m_current_result.raw_phase = phase;
-    //Serial.print("Raw phase: ");
-    //Serial.println(phase);
 
-
-    
     phase = phase * 3.1415f / 1024.0f;
 
     if(digitalRead(CAPACITIVE_PIN))
@@ -101,31 +97,19 @@ complex_t impedance_tester::get_impedance()
     }
     
     // Calculate gamma and adjust with calibration data
+    // TODO: Maybe calculate gamma directly from measured values instead of going to impedance -> gamma -> adjust -> impedance?
     complex_t Z0(50.0f, 0.0f);
     complex_t ZL = m_current_result.impedance;
     m_current_result.gamma = (ZL-Z0)/(ZL+Z0);
-    
 
-    //Serial.print("Unadjusted gamma: ");
-    //m_current_result.gamma.print();
-    //Serial.println();
     if(m_use_calibration_data)
         adjust_gamma();
-
-   // Serial.print("Adjusted gamma: ");
-    //m_current_result.gamma.print();
-    //Serial.println();
 
     m_current_result.gamma_calculated = true;
 
     // Calculate new impedance from adjusted gamma
     m_current_result.impedance = complex_t(50, 0) * (complex_t(1,0)+m_current_result.gamma)/(complex_t(1,0)-m_current_result.gamma);
     m_current_result.impedance_calculated = true;
-    //Serial.print("Impedance: ");
-    //Serial.print(m_current_result.impedance.real);
-    //Serial.print(" + j");
-    //Serial.print(m_current_result.impedance.imag);
-    //Serial.println();
 
     
     return m_current_result.impedance;
@@ -159,6 +143,8 @@ void impedance_tester::adjust_gamma()
 {
     complex_t a, b, c;
     get_coefficients_from_frequency(m_current_result.frequency, a, b, c);
+    
+    // Calculate error factors from calibration coefficients and adjust gamma
     complex_t e00 = b;
     complex_t e11 = -c;
     complex_t e10e01 = a + e00*e11;
@@ -166,16 +152,11 @@ void impedance_tester::adjust_gamma()
     m_current_result.gamma = (m_current_result.gamma - e00) / (e11*(m_current_result.gamma - e00) + (e10e01));
 }
 
-float lerp(float v0, float v1, float t) {
-  return (1 - t) * v0 + t * v1;
-}
-
 uint32_t frequency_to_calibration_index(uint32_t f)
 {
     if(f < 100000)
     {
         f = 100000;
-        ///Serial.println("Value too low");
     }
     f = f - 100000;
 
@@ -190,10 +171,8 @@ uint32_t calibration_index_to_frequency(uint32_t i)
 void impedance_tester::get_coefficients_from_frequency(uint32_t f, complex_t &a, complex_t &b, complex_t &c)
 {
     uint32_t index = frequency_to_calibration_index(f);
-    
-    //uint32_t first_freq = calibration_index_to_frequency(index);
-    //uint32_t second_freq = calibration_index_to_frequency(index+1);
 
+    // TODO: add interpolation for frequencies between calibration points (linear?)
     a = m_calibration_data.coefficients[0][index];
     b = m_calibration_data.coefficients[1][index];
     c = m_calibration_data.coefficients[2][index];
@@ -231,9 +210,9 @@ void impedance_tester::save_calibration_data()
 
 void impedance_tester::get_coefficients(complex_t m1, complex_t m2, complex_t m3, complex_t &a, complex_t &b, complex_t &c)
 {
-    complex_t a1(-0.81818182, 0);
-    complex_t a2(0, 0);
-    complex_t a3(0.81818182, 0);
+    complex_t a1(-0.81818182, 0);   // Expected reflection coefficient from 5 Ohm load
+    complex_t a2(0, 0);             // 50 Ohm load
+    complex_t a3(0.81818182, 0);    // 500 Ohm load
 
     a = -(-m1 * m2 * a1 + m1 * m3 * a1 + m1 * m2 * a2 - m2 * m3 * a2 - m1 * m3 * a3 + m2 * m3 * a3)/(m1 * a1 * a2 - m2 * a1 * a2 + m2 * a3 * a2 - m3 * a3 * a2 - m1 * a1 * a3 + m3 * a1 * a3);
     b = -(-m1 * m3 * a1 * a2 + m2 * m3 * a1 * a2 - m1 * m2 * a3 * a2 + m1 * m3 * a3 * a2 + m1 * m2 * a1 * a3 - m2 * m3 * a1 * a3)/(m1 * a1 * a2 - m2 * a1 * a2 + m2 * a3 * a2 - m3 * a3 * a2 - m1 * a1 * a3 + m3 * a1 * a3);
@@ -252,7 +231,7 @@ void impedance_tester::calculate_coefficients(gamma_data_t &gamma)
     }
 }
 
-void impedance_tester::calibrate(display &disp)
+void impedance_tester::run_calibration(display &disp)
 {
     gamma_data_t gamma;
     m_use_calibration_data = false;
@@ -261,44 +240,27 @@ void impedance_tester::calibrate(display &disp)
     uint32_t old_delay = measurement_delay;
 
     samples_per_measurement = 4000;
-    measurement_delay = 100;
+    measurement_delay = 200;
 
-    disp.new_load(OHM5);
-    disp.calibration_init(OHM5, 128);
+    calibration_type calibration_loads[] = {OHM5, OHM50, OHM500};
 
-    for(uint32_t i = 0; i < 128; i++)
+    // Save reflection coefficients for different frequencies and three different loads (loads that are close to open short and load)
+    for(uint8_t i = 0; i < sizeof(calibration_loads)/sizeof(calibration_type); i++)
     {
-        make_measurement(calibration_index_to_frequency(i));
-        gamma.gamma[OHM5][i] = get_gamma();
-        gamma.gamma[OHM5][i].print();
-        Serial.println();
-        disp.calibration_tick();
+        disp.show_new_load_prompt(calibration_loads[i]);
+        disp.show_calibration_screen(calibration_loads[i], 128);
+
+        for(uint32_t j = 0; j < 128; j++)
+        {
+            make_measurement(calibration_index_to_frequency(i));
+            gamma.gamma[calibration_loads[i]][j] = get_gamma();
+            gamma.gamma[calibration_loads[i]][j].print();
+            Serial.println();
+            disp.calibration_tick();
+        }
     }
 
-    disp.new_load(OHM50);
-    disp.calibration_init(OHM50, 128);
-
-    for(uint32_t i = 0; i < 128; i++)
-    {
-        make_measurement(calibration_index_to_frequency(i));
-        gamma.gamma[OHM50][i] = get_gamma();
-        gamma.gamma[OHM50][i].print();
-        Serial.println();
-        disp.calibration_tick();
-    }
-
-    disp.new_load(OHM500);
-    disp.calibration_init(OHM500, 128);
-
-    for(uint32_t i = 0; i < 128; i++)
-    {
-        make_measurement(calibration_index_to_frequency(i));
-        gamma.gamma[OHM500][i] = get_gamma();
-        gamma.gamma[OHM500][i].print();
-        Serial.println();
-        disp.calibration_tick();
-    }
-
+    // Calculate calibration coefficients based on the reflection coefficients we got and the ones we expect from the predefined loads
     calculate_coefficients(gamma);
 
     m_use_calibration_data = true;

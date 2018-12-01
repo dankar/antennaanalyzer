@@ -15,7 +15,7 @@ void setup()
     
     disp.init();
     imp.init();
-    disp.load();
+    disp.show_load_screen();
     imp.load_calibration_data();
     //imp.print_calibration_data();
     
@@ -23,11 +23,11 @@ void setup()
 
 void calibrate()
 {
-    imp.calibrate(disp);
-    disp.save();
+    imp.run_calibration(disp);
+    disp.show_save_screen();
     imp.save_calibration_data();
     imp.print_calibration_data();
-    disp.clear();
+    disp.clear_screen();
 }
 
 void loop() 
@@ -36,10 +36,9 @@ void loop()
     float stop = 30;
     uint32_t steps = 256;
 
-    
     //imp.print_calibration_data();
     //calibrate();
-    disp.graph_init(start, stop);
+    disp.show_graph_screen(start, stop);
 
     for(uint32_t f = start*1000000; f < stop*1000000; f+= (stop*1000000-start*1000000)/steps * 4)
     {
