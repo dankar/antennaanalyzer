@@ -36,17 +36,17 @@ void loop()
     uint32_t steps = 256;
 
     //imp.print_calibration_data();
-    calibrate();
-    imp.print_calibration_data();
+    //calibrate();
+    //imp.print_calibration_data();
     disp.show_graph_screen(start, stop);
-    imp.set_measurement_parameters(200, 4000);
+    //imp.set_measurement_parameters(200, 4000);
 
-    for(uint32_t f = start*1000000; f < stop*1000000; f+= (stop*1000000-start*1000000)/steps * 4)
+    for(uint32_t f = start*1000000; f < stop*1000000; f+= (stop*1000000-start*1000000)/steps * 2)
     {
         imp.make_measurement(f);
         float VSWR = imp.get_vswr();
         //disp.draw_impedance(imp.get_impedance());
-        disp.graph_add_datapoint(VSWR, f, 4);
+        disp.graph_add_datapoint(VSWR, f, 2);
     }
 
     for(;;);
