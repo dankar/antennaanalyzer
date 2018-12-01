@@ -28,6 +28,49 @@ void display::init()
     digitalWrite(TFT_LED, HIGH);
 }
 
+void display::draw_button(const char *str, uint16_t x, uint16_t y)
+{
+    uint16_t size_x = (m_tft.width()/2 - BUTTON_MARGIN)/2;
+    uint16_t size_y = (m_tft.height()/3 - BUTTON_MARGIN)/2;
+    m_tft.drawLine(x - size_x, y - size_y, x + size_x, y - size_y, BUTTON_COLOR);
+    m_tft.drawLine(x + size_x, y - size_y, x + size_x, y + size_y, BUTTON_COLOR);
+    m_tft.drawLine(x + size_x, y + size_y, x - size_x, y + size_y, BUTTON_COLOR);
+    m_tft.drawLine(x - size_x, y + size_y, x - size_x, y - size_y, BUTTON_COLOR);
+    
+    draw_centered_text(str, x, y, 1, BUTTON_COLOR);
+}
+
+uint8_t display::get_button_press(uint8_t num_buttons)
+{
+    uint8_t item;
+    do
+    {
+        TS_Point p = wait_for_touch();
+        p.x /= m_tft.width()/2;
+        p.y /= m_tft.height()/3;
+
+        item = p.y * 2 + p.x;
+    } while(item >= num_buttons);
+
+    return item;
+}
+
+uint8_t display::draw_menu(const char** strs, uint8_t *results, uint8_t num_buttons)
+{
+    clear_screen();
+    uint8_t num_drawn_buttons = 0;
+
+    for(int y = 0; y < 3 && num_drawn_buttons < num_buttons; y++)
+    {
+        for(int x = 0; x < 2 && num_drawn_buttons < num_buttons; x++, num_drawn_buttons++)
+        {
+            draw_button(strs[num_drawn_buttons], m_tft.width()/4 + x * (m_tft.width()/2), m_tft.height()/6 + y * (m_tft.height()/3));
+        }
+    }
+
+    return results[get_button_press(num_buttons)];
+}
+
 void display::draw_centered_text(const String &str, uint16_t x, uint16_t y, uint8_t size, uint16_t color)
 {
     int16_t bx, by;
@@ -104,7 +147,7 @@ void display::show_graph_screen(float start_freq, float stop_freq)
     {
         float val = float(i);
         uint8_t precision = 1;
-        m_tft.setCursor(GRAPH_LEFT_MARGIN-20, y_from_value(val) - 3);
+        m_tft.setCursor(GRAPH_LEFT_MARGIN-20, y_from_value(val) - 4);
 
         if(val >= 10.0)
             precision = 0;
@@ -173,14 +216,15 @@ String display::get_load_type_string(calibration_type type)
     return String("Unknown");
 }
 
-void display::wait_for_touch()
+TS_Point display::wait_for_touch()
 {
+    TS_Point p;
     int count = 0;
     for(;;)
     {
         if(m_touch.touched())
         {
-            get_touch_point();
+            p = get_touch_point();
             count++;
         }
         else
@@ -192,6 +236,8 @@ void display::wait_for_touch()
         if(count > 3)
             break;
     }
+
+    return p;
 }
 
 void display::show_new_load_prompt(calibration_type type)
@@ -206,15 +252,9 @@ void display::show_new_load_prompt(calibration_type type)
 TS_Point display::get_touch_point()
 {
     TS_Point p = m_touch.getPoint();
-    int temp = p.x;
-    p.x = p.y;
-    p.y = temp;
 
     p.x = map(p.x, TS_MINX, TS_MAXX, 0, m_tft.width());
     p.y = map(p.y, TS_MINY, TS_MAXY, 0, m_tft.height());
-
-    p.y = m_tft.height() - p.y;
-
     return p;
 }
 
@@ -267,12 +307,10 @@ void display::clear_screen()
 }
 void display::calibration_tick()
 {
-    if(m_current_calibration_step % 5 == 0)
+    if(m_current_calibration_step % 2 == 0)
     {
-        m_tft.setFont(&FreeSans24pt7b);
-        erase_centered_text("100.0%", m_tft.width()/2, m_tft.height()/2, 1);
-        draw_centered_text(String(float(m_current_calibration_step) * 100.0f / m_number_of_calibration_steps, 2) + "%", m_tft.width()/2, m_tft.height()/2, 1, GRAPH_LEGEND_COLOR);
-        m_tft.setFont();
+        erase_centered_text("100.0%", m_tft.width()/2, m_tft.height()/2, 6);
+        draw_centered_text(String(float(m_current_calibration_step) * 100.0f / m_number_of_calibration_steps, 2) + "%", m_tft.width()/2, m_tft.height()/2, 6, GRAPH_LEGEND_COLOR);
     }
     m_current_calibration_step++;
 }

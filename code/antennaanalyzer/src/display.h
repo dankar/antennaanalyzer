@@ -19,11 +19,19 @@
 #define GRAPH_LINE_COLOR        ILI9341_DARKGREY
 #define GRAPH_VSWR_LINE         ILI9341_DARKGREEN
 
+#define BUTTON_COLOR            ILI9341_BLACK
+
+#define BUTTON_MARGIN 2
+
 class display
 {
 public:
     display() : m_tft(TFT_CS, TFT_DC, TFT_RESET), m_touch(TOUCH_CS, /*digitalPinToInterrupt(TOUCH_IRQ)*/ 255) {};
     void init();
+
+    void draw_button(const char *str, uint16_t x, uint16_t y);
+    uint8_t draw_menu(const char** strs, uint8_t *results, uint8_t num_buttons);
+    uint8_t get_button_press(uint8_t num_buttons);
 
     void show_graph_screen(float start_freq, float stop_freq);
     void graph_add_datapoint(float vswr, uint32_t freq, int steps = 1);
@@ -37,9 +45,9 @@ public:
     void clear_screen();
     void show_load_screen();
     void show_save_screen();
-private:
 
-    void wait_for_touch();
+    TS_Point wait_for_touch();
+private:
     void draw_centered_text(const String &str, uint16_t x, uint16_t y, uint8_t size, uint16_t color);
     void erase_centered_text(const String &str, uint16_t x, uint16_t y, uint8_t size);
     uint32_t x_from_index(uint32_t index);
