@@ -74,7 +74,6 @@ void display::show_graph_screen(float start_freq, float stop_freq)
     m_tft.drawLine(DISPLAY_X - GRAPH_RIGHT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, GRAPH_LEFT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, ILI9341_LIGHTGREY);
     m_tft.drawLine(GRAPH_LEFT_MARGIN, DISPLAY_Y - GRAPH_BOTTOM_MARGIN, GRAPH_LEFT_MARGIN, GRAPH_TOP_MARGIN, ILI9341_LIGHTGREY);
 
-
     // VSWR text
     for(int i = 1; i <= 12; i+=2)
     {
@@ -125,9 +124,13 @@ void display::show_impedance_viewer(complex_t comp)
     m_tft.getTextBounds("100.00 + 100.00j", 10, 50, &x1, &x2, &w, &h);
     m_tft.fillRect(x1, x2, w, h, ILI9341_BLACK);
     m_tft.setCursor(10, 50);
+
     m_tft.print(comp.real);
-    m_tft.print(" + j");
-    m_tft.print(comp.imag);
+    if(comp.imag >= 0.0f)
+        m_tft.print(" + j");
+    else
+        m_tft.print(" - j");
+    m_tft.print(fabs(comp.imag));
 }
 
 void display::print_load_type(calibration_type type)
