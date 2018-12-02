@@ -13,6 +13,10 @@ public:
     {
         return complex_t(real * right.real - imag * right.imag, real * right.imag + imag * right.real);
     }
+    complex_t operator*(float v)
+    {
+        return complex_t(real * v, imag * v);
+    }
     complex_t operator-(const complex_t &right)
     {
         return complex_t(real - right.real, imag - right.imag);
@@ -24,6 +28,10 @@ public:
     complex_t operator/(const complex_t &right)
     {
         return complex_t((real * right.real + imag * right.imag)/(right.real*right.real+right.imag*right.imag), (imag * right.real - real * right.imag) / (right.real*right.real+right.imag*right.imag));
+    }
+    complex_t operator/(float v)
+    {
+        return complex_t(real / v, imag/v);
     }
     float magnitude()
     {
@@ -37,3 +45,6 @@ public:
     float real;
     float imag;
 };
+
+complex_t operator*(float v, complex_t x);
+complex_t complex_lerp(complex_t a, complex_t b, float t);

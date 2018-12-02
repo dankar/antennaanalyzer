@@ -307,7 +307,7 @@ void display::clear_screen()
 }
 void display::calibration_tick()
 {
-    if(m_current_calibration_step % 2 == 0)
+    if(m_current_calibration_step % 10 == 0)
     {
         erase_centered_text("100.0%", m_tft.width()/2, m_tft.height()/2, 6);
         draw_centered_text(String(float(m_current_calibration_step) * 100.0f / m_number_of_calibration_steps, 2) + "%", m_tft.width()/2, m_tft.height()/2, 6, GRAPH_LEGEND_COLOR);
@@ -317,7 +317,7 @@ void display::calibration_tick()
 
 void display::print_calibration_gamma(complex_t gamma)
 {
-    if(m_current_calibration_step % 2 == 0)
+    if(m_current_calibration_step % 10 == 0)
     {
         erase_centered_text("100.0 + j100.0", m_tft.width()/2, m_tft.height()/2+50, 1);
         draw_centered_text(gamma.to_string(), m_tft.width()/2, m_tft.height()/2+50, 1, DEFAULT_TEXT_COLOR);

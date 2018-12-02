@@ -15,7 +15,8 @@ public:
         CALIBRATE,
         BRIGHTNESS,
         BRIGHTNESS_DOWN,
-        BRIGHTNESS_UP
+        BRIGHTNESS_UP,
+        DUMP_CALIBRATION
     };
 
     menu_system(impedance_tester &imp, display &disp) : m_current_state(HOME_SCREEN), m_tester(imp), m_display(disp), m_brightness(255) {};
@@ -27,6 +28,7 @@ private:
     void settings();
     void brightness();
     void show_impedance();
+    void dump_calibration();
 
     states m_current_state;
     impedance_tester &m_tester;

@@ -178,10 +178,17 @@ void impedance_tester::get_coefficients_from_frequency(uint32_t f, complex_t &a,
 {
     uint32_t index = frequency_to_calibration_index(f);
 
+    uint32_t index_frequency = calibration_index_to_frequency(index);
+    uint32_t next_index_frequency = calibration_index_to_frequency(index+1);
+
+    uint32_t frequency_diff = f - index_frequency;
+
+    float diff = float(frequency_diff) / (next_index_frequency - index_frequency);
+
     // TODO: add interpolation for frequencies between calibration points (linear?)
-    a = m_calibration_data.coefficients[0][index];
-    b = m_calibration_data.coefficients[1][index];
-    c = m_calibration_data.coefficients[2][index];
+    a = complex_lerp(m_calibration_data.coefficients[0][index], m_calibration_data.coefficients[0][index+1], diff);
+    b = complex_lerp(m_calibration_data.coefficients[1][index], m_calibration_data.coefficients[1][index+1], diff);
+    c = complex_lerp(m_calibration_data.coefficients[2][index], m_calibration_data.coefficients[2][index+1], diff);
 }
 
 void impedance_tester::print_calibration_data()
@@ -245,8 +252,8 @@ void impedance_tester::run_calibration(display &disp)
     uint32_t old_samples = samples_per_measurement;
     uint32_t old_delay = measurement_delay;
 
-    samples_per_measurement = 2048; //4000;
-    measurement_delay = 100; //200;
+    samples_per_measurement = 5000;
+    measurement_delay = 200;
 
     calibration_type calibration_loads[] = {OHM5, OHM50, OHM500};
 

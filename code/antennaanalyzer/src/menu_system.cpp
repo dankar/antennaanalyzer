@@ -15,13 +15,13 @@ void menu_system::draw_vswr_graph()
     uint32_t steps = 256;
 
     m_display.show_graph_screen(start, stop);
-    m_tester.set_measurement_parameters(20, 512);
+    m_tester.set_measurement_parameters(200, 50);
 
-    for(uint32_t f = start*1000000; f < stop*1000000; f+= (stop*1000000-start*1000000)/steps * 4)
+    for(uint32_t f = start*1000000; f < stop*1000000; f+= (stop*1000000-start*1000000)/steps * 1)
     {
         m_tester.make_measurement(f);
         float VSWR = m_tester.get_vswr();
-        m_display.graph_add_datapoint(VSWR, f, 4);
+        m_display.graph_add_datapoint(VSWR, f, 1);
     }
 
     m_display.wait_for_touch();
@@ -37,9 +37,9 @@ void menu_system::home_screen()
 
 void menu_system::settings()
 {
-    const char *menu_strings[] = {"Calibrate", "Brightness", "Back"};
-    uint8_t menu[] = { CALIBRATE, BRIGHTNESS, HOME_SCREEN };
-    m_current_state = (states)m_display.draw_menu(menu_strings, menu, 3);
+    const char *menu_strings[] = {"Calibrate", "Brightness", "Dump calibration", "Back"};
+    uint8_t menu[] = { CALIBRATE, BRIGHTNESS, DUMP_CALIBRATION,  HOME_SCREEN };
+    m_current_state = (states)m_display.draw_menu(menu_strings, menu, 4);
 }
 
 void menu_system::show_impedance()
@@ -86,6 +86,13 @@ void menu_system::brightness()
     }
 }
 
+void menu_system::dump_calibration()
+{
+    m_display.clear_screen();
+    m_tester.print_calibration_data();
+    m_current_state = SETTINGS;
+}
+
 void menu_system::run()
 {
     switch(m_current_state)
@@ -111,6 +118,8 @@ void menu_system::run()
     case BRIGHTNESS:
         brightness();
         break;
-
+    case DUMP_CALIBRATION:
+        dump_calibration();
+        break;
     }
 }
