@@ -58,3 +58,4 @@ public:
 
 complex_t operator*(float v, complex_t x);
 complex_t complex_lerp(complex_t a, complex_t b, float t);
+float lerp(float a, float b, float t);

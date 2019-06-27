@@ -3,9 +3,8 @@
 #include "dialogs/menus.h"
 #include "measure.h"
 
-
-
 range_t g_ranges[] = {{"80m", 3500000, 3800000}, {"40m", 7000000, 7200000}, {"20m", 14000000, 14350000}, {"10m", 28000000, 29700000}, {"All", 100000, 30000000}};
+uint16_t g_num_ranges = sizeof(g_ranges) / sizeof(range_t);
 
 static lv_res_t back_button_callback(lv_obj_t * btn)
 {

@@ -10,6 +10,9 @@ struct range_t
     uint32_t end_frequency;
 };
 
+extern range_t g_ranges[];
+extern uint16_t g_num_ranges;
+
 class gui_ranges : public gui_dialog
 {
 public:

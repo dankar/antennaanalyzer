@@ -18,7 +18,7 @@ extern "C" int real_main()
     gui_init();
     //HAL_Delay(2000);
     g_impedance_tester.init();
-    //serial_print("Tjo\r\n");
+   // serial_print("Tjo\r\n");
     gui_show(GET_DIALOG_REF(gui_main_menu));
     uint32_t last_print = HAL_GetTick();
     while(1)

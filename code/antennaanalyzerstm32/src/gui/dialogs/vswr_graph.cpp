@@ -8,11 +8,12 @@
 #include "ILI9341_GFX.h"
 #include "xtp2046.h"
 #include "pixels.h"
+#include "util/gcvt.h"
 
 #define LCD_WIDTH 320.0
 #define LCD_HEIGHT 240.0
 
-#define NUM_STEPS 128
+#define NUM_STEPS 256
 
 #define BOTTOM_MARGIN 30.0
 #define LEFT_MARGIN 25.0
@@ -50,6 +51,27 @@ uint16_t get_phase_x(float phase)
     return (uint16_t)(get_vswr_x(1.0) - (LCD_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN) / MAX_PHASE * phase);
 }
 
+uint16_t get_frequency_y(uint32_t frequency)
+{
+    range_t range = g_gui_ranges.get_current_range();
+    if(frequency < range.start_frequency)
+    {
+        return -1;
+    }
+    if(frequency > range.end_frequency)
+    {
+        return -1;
+    }
+
+    float start = LEFT_MARGIN;
+    float end = LCD_WIDTH-RIGHT_MARGIN;
+    
+    frequency = frequency - range.start_frequency;
+    float coeff = float(frequency) / float(range.end_frequency - range.start_frequency);
+
+    return lerp(start, end, coeff);
+}
+
 void gui_vswr_graph::enter()
 {
     disable_gui();
@@ -72,11 +94,18 @@ void gui_vswr_graph::reset()
     float start = LEFT_MARGIN;
     float end = LCD_WIDTH-RIGHT_MARGIN;
     range_t range = g_gui_ranges.get_current_range();
+
+    for(uint16_t i = 0; i < g_num_ranges - 1; i++)
+    {
+        range_t all_range = g_ranges[i];
+        ILI9341_Draw_Filled_Rectangle_Coord(get_frequency_y(all_range.start_frequency), TOP_MARGIN, get_frequency_y(all_range.end_frequency), LCD_HEIGHT-BOTTOM_MARGIN, DARKGREY);
+    }
+
     for(uint16_t i = 0; i < 5; i++)
     {
         uint32_t freq = range.start_frequency + (range.end_frequency - range.start_frequency) / 4 * i;
         
-        sprintf(result, "%.3f", (freq/1000000.0f));
+        gcvt((float(freq)/1000000.0f), 4, result);
         uint16_t x = (uint16_t)(start + (end-start) / 4.0 * (float)i);
         ILI9341_Draw_Text(result, x - 20, (uint16_t)(LCD_HEIGHT - BOTTOM_MARGIN + 20), YELLOW, 1);
         ILI9341_Draw_Vertical_Line(x, TOP_MARGIN, LCD_HEIGHT-TOP_MARGIN-BOTTOM_MARGIN, LIGHTGREY);

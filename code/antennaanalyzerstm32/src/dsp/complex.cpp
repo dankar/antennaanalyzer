@@ -9,3 +9,8 @@ complex_t complex_lerp(complex_t a, complex_t b, float t)
 {
     return (1 - t) * a + t * b;
 }
+
+float lerp(float a, float b, float t)
+{
+    return (1 - t) * a + t * b;
+}

@@ -22,7 +22,7 @@ env.Append(
 #    "-mthumb",
     "-mfloat-abi=hard",
     "-mfpu=fpv4-sp-d16",
-    "-u_printf_float",
+ #   "-u_printf_float",
  #   "-mcpu=%s" % env.BoardConfig().get("build.cpu"),
  #   "--specs=nano.specs",
  #   "--specs=nosys.specs"
